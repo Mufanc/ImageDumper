@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">ImageDumper</string>
+    <string name="app_description">抓取应用 ImageView 中的图片</string>
+</resources>

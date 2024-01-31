@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application
+        android:label="@string/app_name"
+        android:description="@string/app_description"
+        android:theme="@style/Theme.ImageDumper"
+        android:forceQueryable="true"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        tools:targetApi="31" >
+
+        <provider
+            android:name=".ImageSaver"
+            android:authorities="${applicationId}.imagesaver"
+            android:enabled="true"
+            android:exported="true"
+            tools:ignore="ExportedContentProvider" />
+
+    </application>
+
+</manifest>

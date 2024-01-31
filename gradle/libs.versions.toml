@@ -1,0 +1,30 @@
+[versions]
+agp = "8.3.0-beta02"
+kotlin = "1.9.22"
+ksp = "1.9.22-1.0.17"
+xposed-api = "100"
+xposed-service = "100-1.0.0"
+autox = "1.0.1"
+joor = "0.9.14"
+hiddenapi-lib = "4.3.2"
+hiddenapi-refine = "4.4.0"
+simple-storage = "1.5.5"
+material = "1.11.0"
+
+[libraries]
+xposed-api = { module = "io.github.libxposed:api", version.ref = "xposed-api" }
+xposed-service = { module = "io.github.libxposed:service", version.ref = "xposed-service" }
+autox-ksp = { module = "xyz.mufanc.autox:ksp", version.ref = "autox" }
+autox-annotation = { module = "xyz.mufanc.autox:annotation", version.ref = "autox" }
+joor = { module = "org.jooq:joor", version.ref = "joor" }
+hiddenapi-stub = { module = "dev.rikka.hidden:stub", version.ref = "hiddenapi-lib" }
+hiddenapi-compat = { module = "dev.rikka.hidden:compat", version.ref = "hiddenapi-lib" }
+simple-storage = { module = "com.anggrayudi:storage", version.ref = "simple-storage" }
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+
+[plugins]
+agp-app = { id = "com.android.application", version.ref = "agp" }
+agp-lib = { id = "com.android.library", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+hiddenapi-refine = { id = "dev.rikka.tools.refine", version.ref = "hiddenapi-refine" }
