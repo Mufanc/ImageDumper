@@ -34,3 +34,8 @@ android {
         targetCompatibility = androidTargetCompatibility
     }
 }
+
+dependencies {
+    compileOnly(libs.hiddenapi.annotation)
+    annotationProcessor(libs.hiddenapi.annotation.processor)
+}

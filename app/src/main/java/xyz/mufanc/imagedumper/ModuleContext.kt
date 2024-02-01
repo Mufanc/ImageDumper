@@ -5,15 +5,15 @@ import android.content.Context
 import android.content.ContextWrapper
 import org.joor.Reflect
 
-class ModuleThemeContext private constructor(
+class ModuleContext private constructor(
     private val host: Context,
     private val module: Context
 ) : ContextWrapper(module) {
 
-    constructor(context: Context) : this(context, ctx)
+    constructor(context: Context) : this(context, packageContext)
 
     override fun getApplicationContext(): Context {
-        return ModuleThemeContext(host.applicationContext, module)
+        return ModuleContext(host.applicationContext, module)
     }
 
     override fun getSystemService(name: String): Any {
@@ -27,10 +27,10 @@ class ModuleThemeContext private constructor(
 
         private val app by lazy { ActivityThread.currentActivityThread().application }
 
-        private val ctx by lazy {
+        val packageContext: Context by lazy {
             app.createPackageContext(BuildConfig.APPLICATION_ID, 0).apply {
                 setTheme(R.style.Theme_ImageDumper)
-                Reflect.on(classLoader).set("parent", ModuleThemeContext::class.java.classLoader)
+                Reflect.on(classLoader).set("parent", ModuleContext::class.java.classLoader)
             }
         }
     }

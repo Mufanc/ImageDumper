@@ -2,12 +2,9 @@ package xyz.mufanc.imagedumper
 
 import android.graphics.Bitmap
 import android.graphics.Shader
-import android.util.Log
 import android.view.View
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.content.res.AppCompatResources
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import xyz.mufanc.imagedumper.ModuleMain.Companion.TAG
 import xyz.mufanc.imagedumper.databinding.DialogPreviewBinding
 
 class PreviewDialog(
@@ -15,7 +12,7 @@ class PreviewDialog(
     private val bitmap: Bitmap
 ) {
 
-    private val context = ModuleThemeContext(iv.context)
+    private val context = ModuleContext(iv.context)
 
     private fun performClick() {
         var current: View? = iv

@@ -39,11 +39,21 @@ class ModuleMain(
     @XposedHooker
     class ImageViewInitHook : XposedInterface.Hooker {
         companion object {
+
+            private val nodump: String by lazy {
+                ModuleContext.packageContext.getString(R.string.tag_nodump)
+            }
+
             @AfterInvocation
             @JvmStatic
             fun handle(callback: AfterHookCallback, ctx: ImageViewInitHook?) {
                 val iv = (callback.thisObject as ImageView)
-                iv.setOnLongClickListener(ListenerWrapper())
+
+                if (iv.tag != nodump) {
+                    iv.setOnLongClickListener(ListenerWrapper())
+                } else {
+                    Log.i(TAG, "skip: $iv")
+                }
             }
         }
     }

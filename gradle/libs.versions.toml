@@ -19,6 +19,8 @@ autox-annotation = { module = "xyz.mufanc.autox:annotation", version.ref = "auto
 joor = { module = "org.jooq:joor", version.ref = "joor" }
 hiddenapi-stub = { module = "dev.rikka.hidden:stub", version.ref = "hiddenapi-lib" }
 hiddenapi-compat = { module = "dev.rikka.hidden:compat", version.ref = "hiddenapi-lib" }
+hiddenapi-annotation-processor = { module = "dev.rikka.tools.refine:annotation-processor", version.ref = "hiddenapi-refine" }
+hiddenapi-annotation = { module = "dev.rikka.tools.refine:annotation", version.ref = "hiddenapi-refine" }
 simple-storage = { module = "com.anggrayudi:storage", version.ref = "simple-storage" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 

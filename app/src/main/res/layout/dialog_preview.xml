@@ -12,6 +12,7 @@
         android:layout_height="match_parent"
         android:importantForAccessibility="no"
         android:minHeight="100dp"
-        android:scaleType="centerInside" />
+        android:scaleType="centerInside"
+        android:tag="@string/tag_nodump" />
 
 </FrameLayout>
