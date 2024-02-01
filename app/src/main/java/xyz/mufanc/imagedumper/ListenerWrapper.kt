@@ -9,19 +9,19 @@ class ListenerWrapper(
 ): View.OnLongClickListener {
 
     override fun onLongClick(view: View?): Boolean {
-        val bitmap = BitmapHelper.dumpBitmap(view)
+        val bitmap = Utils.dumpBitmap(view)
 
-        if (view != null && bitmap != null) {
+        if (bitmap == null) {
+            Log.w(TAG, "long click detected, but failed to dump bitmap.")
+        }
+
+        if (view != null) {
             try {
                 PreviewDialog(view, bitmap).show()
+                return true
             } catch (err: Throwable) {
                 Log.e(TAG, "", err)
             }
-
-            return true
-        } else {
-
-            Log.w(TAG, "long click detected, but failed to dump bitmap.")
         }
 
         return inner?.onLongClick(view) ?: false

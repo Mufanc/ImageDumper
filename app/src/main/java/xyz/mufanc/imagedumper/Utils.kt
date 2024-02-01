@@ -7,11 +7,10 @@ import android.view.View
 import android.widget.ImageView
 import java.io.ByteArrayOutputStream
 
-object BitmapHelper {
+object Utils {
 
     fun dumpBitmap(view: View?): Bitmap? {
         if (view == null) return null
-        if (!view.hasWindowFocus()) return null
         if (view !is ImageView) return null
 
         val drawable = view.drawable
@@ -29,9 +28,23 @@ object BitmapHelper {
         return bitmap
     }
 
-    fun encode(bitmap: Bitmap): ByteArray {
+    fun encodeImage(bitmap: Bitmap): ByteArray {
         val baos = ByteArrayOutputStream()
         bitmap.compress(Bitmap.CompressFormat.PNG, 100, baos)
         return baos.toByteArray()
+    }
+
+    fun performClick(view: View?) {
+        var current = view
+        while (current != null && !current.performClick()) {
+            current = current.parent as? View
+        }
+    }
+
+    fun performLongClick(view: View?) {
+        var current = view
+        while (current != null && !current.performLongClick()) {
+            current = current.parent as? View
+        }
     }
 }

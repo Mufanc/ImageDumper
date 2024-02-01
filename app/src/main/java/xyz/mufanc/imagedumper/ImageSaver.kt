@@ -72,7 +72,7 @@ class ImageSaver : ContentProvider() {
         fun save(context: Context, bitmap: Bitmap, filename: String? = ""): String? {
             val resolver = context.applicationContext.contentResolver
 
-            val data = BitmapHelper.encode(bitmap)
+            val data = Utils.encodeImage(bitmap)
             val file = MemoryFile("bitmap", data.size)
 
             file.writeBytes(data, 0, 0, data.size)

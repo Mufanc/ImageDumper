@@ -9,45 +9,40 @@ import xyz.mufanc.imagedumper.databinding.DialogPreviewBinding
 
 class PreviewDialog(
     private val iv: View,
-    private val bitmap: Bitmap
+    private val bitmap: Bitmap?
 ) {
 
     private val context = ModuleContext(iv.context)
 
-    private fun performClick() {
-        var current: View? = iv
-        while (current != null && !current.performClick()) {
-            current = current.parent as? View
-        }
-    }
-
-    private fun performLongClick() {
-        var current: View? = iv
-        while (current != null && !current.performLongClick()) {
-            current = current.parent as? View
-        }
-    }
-
     private val dialog = MaterialAlertDialogBuilder(context)
-        .setTitle("图片预览")
-        .setPositiveButton("👉点击") { _, _ ->
-            performClick()
+        .setTitle(R.string.preview_title)
+        .setPositiveButton(R.string.preview_btn_click) { _, _ ->
+            Utils.performClick(iv)
         }
-        .setNegativeButton("👉长按") { _, _ ->
-            performLongClick()
+        .setNegativeButton(R.string.preview_btn_long_click) { _, _ ->
+            Utils.performLongClick(iv)
         }
-        .setNeutralButton("保存图片") { _, _ ->
-            ImageSaver.save(context, bitmap, iv.contentDescription?.toString())
+        .apply {
+            if (bitmap != null) {
+                setNeutralButton(R.string.preview_btn_save_image) { _, _ ->
+                    ImageSaver.save(context, bitmap, iv.contentDescription?.toString())
+                }
+            }
         }
         .create()
         .apply {
             val binding = DialogPreviewBinding.inflate(layoutInflater)
 
-            binding.preview.setImageBitmap(bitmap)
-            binding.preview.background = TileDrawable(
-                AppCompatResources.getDrawable(context, R.drawable.bg_transparent)!!,
-                Shader.TileMode.REPEAT
-            )
+            if (bitmap != null) {
+                binding.preview.setImageBitmap(bitmap)
+                binding.preview.background = TileDrawable(
+                    AppCompatResources.getDrawable(context, R.drawable.bg_transparent)!!,
+                    Shader.TileMode.REPEAT
+                )
+            } else {
+                binding.preview.visibility = View.GONE
+                binding.message.visibility = View.VISIBLE
+            }
 
             setView(binding.root)
         }
