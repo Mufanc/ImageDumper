@@ -1,6 +1,10 @@
 package xyz.mufanc.imagedumper
 
-import android.annotation.SuppressLint
+import android.app.Activity
+import android.app.ActivityThread
+import android.app.Application
+import android.app.Application.ActivityLifecycleCallbacks
+import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.ImageView
@@ -25,7 +29,6 @@ class ModuleMain(
         const val TAG = "ImageDumper"
     }
 
-    @SuppressLint("SoonBlockedPrivateApi", "DiscouragedPrivateApi")
     override fun onPackageLoaded(param: XposedModuleInterface.PackageLoadedParam) {
         if (!param.isFirstPackage) return
         if (param.packageName != mlp.processName) return
@@ -33,7 +36,37 @@ class ModuleMain(
         hook(ImageView::class.java.findMethod("initImageView"), ImageViewInitHook::class.java)
         hook(View::class.java.findMethod("setOnLongClickListener"), SetOnLongClickListenerHook::class.java)
 
+        val apps: ArrayList<Application> = Reflect.on(ActivityThread.currentActivityThread()).get("mAllApplications")
+        val monitor = ApplicationMonitor(apps)
+
         Log.i(TAG, "module loaded. (${mlp.processName})")
+    }
+
+    private class ApplicationMonitor(apps: ArrayList<Application>) : ArrayListProxy<Application>(apps) {
+
+        override fun add(element: Application): Boolean {
+            return super.add(element).apply {
+                handleLoadApplication(element)
+                detach()
+            }
+        }
+
+        private fun handleLoadApplication(app: Application) {
+            app.registerActivityLifecycleCallbacks(
+                object : ActivityLifecycleCallbacks {
+                    override fun onActivityCreated(activity: Activity, cache: Bundle?) {
+                        FloatyWindow(activity)
+                    }
+
+                    override fun onActivityStarted(activity: Activity) = Unit
+                    override fun onActivityResumed(activity: Activity) = Unit
+                    override fun onActivityPaused(activity: Activity) = Unit
+                    override fun onActivityStopped(activity: Activity) = Unit
+                    override fun onActivitySaveInstanceState(activity: Activity, state: Bundle) = Unit
+                    override fun onActivityDestroyed(activity: Activity) = Unit
+                }
+            )
+        }
     }
 
     @XposedHooker
