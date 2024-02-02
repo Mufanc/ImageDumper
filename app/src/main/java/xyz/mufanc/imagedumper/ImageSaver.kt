@@ -11,6 +11,7 @@ import android.os.Parcel
 import android.os.ParcelFileDescriptor
 import android.os.Parcelable
 import android.util.Log
+import android.widget.Toast
 import com.anggrayudi.storage.media.FileDescription
 import com.anggrayudi.storage.media.MediaStoreCompat
 import org.joor.Reflect
@@ -94,24 +95,36 @@ class ImageSaver : ContentProvider() {
             return result?.getBoolean(KEY_SUCCESS) ?: false
         }
 
-        private fun saveImages(dataArr: List<ImageData>): Bundle? {
-            return resolver.call(
-                targetUri,
-                METHOD_SAVE_IMAGES,
-                "",
-                Bundle().apply { putParcelableArray(KEY_IMAGE_DATA, dataArr.toTypedArray()) }
+        private fun saveImages(dataArr: List<ImageData>): Boolean {
+            val success = isSuccess(
+                resolver.call(
+                    targetUri,
+                    METHOD_SAVE_IMAGES,
+                    "",
+                    Bundle().apply { putParcelableArray(KEY_IMAGE_DATA, dataArr.toTypedArray()) }
+                )
             )
+
+            if (success) {
+                Toast.makeText(
+                    MixedContext.hostAppContext,
+                    MixedContext.modulePackageContext.getString(R.string.message_save_image_success),
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+
+            return success
         }
 
         fun save(bitmap: Bitmap, desc: String? = ""): Boolean {
             ImageData(bitmap, desc).use { data ->
-                return isSuccess(saveImages(listOf(data)))
+                return saveImages(listOf(data))
             }
         }
 
         fun save(images: List<Bitmap>): Boolean {
             val imageDataList = images.map { ImageData(it) }
-            val success = isSuccess(saveImages(imageDataList))
+            val success = saveImages(imageDataList)
 
             imageDataList.map(ImageData::close)
 
