@@ -74,7 +74,7 @@ class ModuleMain(
         companion object {
 
             private val nodump: String by lazy {
-                ModuleContext.packageContext.getString(R.string.tag_nodump)
+                MixedContext.modulePackageContext.getString(R.string.tag_nodump)
             }
 
             @AfterInvocation

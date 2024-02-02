@@ -12,11 +12,14 @@ object Utils {
     fun dumpBitmap(view: View?): Bitmap? {
         if (view == null) return null
         if (view !is ImageView) return null
+        if (view.width == 0 || view.height == 0) return null
 
         val drawable = view.drawable
         val bitmap = if (drawable is BitmapDrawable) {
             drawable.bitmap
         } else {
+            if (view.visibility != View.VISIBLE) return null
+
             val bitmap = Bitmap.createBitmap(view.width, view.height, Bitmap.Config.ARGB_8888)
             val canvas = Canvas(bitmap)
 

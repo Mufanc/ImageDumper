@@ -5,15 +5,13 @@ import android.content.Context
 import android.content.ContextWrapper
 import org.joor.Reflect
 
-class ModuleContext private constructor(
+class MixedContext private constructor(
     private val host: Context,
     private val module: Context
 ) : ContextWrapper(module) {
 
-    constructor(context: Context) : this(context, packageContext)
-
     override fun getApplicationContext(): Context {
-        return ModuleContext(host.applicationContext, module)
+        return MixedContext(host.applicationContext, module)
     }
 
     override fun getSystemService(name: String): Any {
@@ -25,13 +23,17 @@ class ModuleContext private constructor(
 
     companion object {
 
-        private val app by lazy { ActivityThread.currentActivityThread().application }
+        val hostAppContext: Context by lazy { ActivityThread.currentActivityThread().application }
 
-        val packageContext: Context by lazy {
-            app.createPackageContext(BuildConfig.APPLICATION_ID, 0).apply {
+        val modulePackageContext: Context by lazy {
+            hostAppContext.createPackageContext(BuildConfig.APPLICATION_ID, 0).apply {
                 setTheme(R.style.Theme_ImageDumper)
-                Reflect.on(classLoader).set("parent", ModuleContext::class.java.classLoader)
+                Reflect.on(classLoader).set("parent", MixedContext::class.java.classLoader)
             }
+        }
+
+        operator fun invoke(context: Context): MixedContext {
+            return (context as? MixedContext) ?: MixedContext(context, modulePackageContext)
         }
     }
 }

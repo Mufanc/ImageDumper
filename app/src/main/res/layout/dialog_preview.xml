@@ -6,7 +6,7 @@
     android:paddingTop="16dp"
     android:paddingHorizontal="20dp">
 
-    <ImageView
+    <xyz.mufanc.imagedumper.TileImageView
         android:id="@+id/preview"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -20,7 +20,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:text="@string/preview_message_failed"
+        android:text="@string/dialog_preview_message_failed"
         android:textAppearance="?attr/textAppearanceBodyMedium"
         android:visibility="gone" />
 

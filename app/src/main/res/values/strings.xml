@@ -2,9 +2,13 @@
     <string name="app_name">ImageDumper</string>
     <string name="app_description">抓取应用 ImageView 中的图片</string>
     <string name="tag_nodump">imagedumper-nodump</string>
-    <string name="preview_title">图片预览</string>
-    <string name="preview_btn_click">👉点击</string>
-    <string name="preview_btn_long_click">👉长按</string>
-    <string name="preview_btn_save_image">保存图片</string>
-    <string name="preview_message_failed">提取图片失败！</string>
+    <string name="dialog_preview_title">图片预览</string>
+    <string name="dialog_preview_btn_click">👉点击</string>
+    <string name="dialog_preview_btn_long_click">👉长按</string>
+    <string name="dialog_preview_btn_save_image">保存图片</string>
+    <string name="dialog_preview_message_failed">提取图片失败！</string>
+    <string name="dialog_image_selector_title">图片选择</string>
+    <string name="dialog_image_selector_save">保存</string>
+    <string name="dialog_image_selector_cancel">取消</string>
+    <string name="dialog_image_selector_toast">未选择任何图片</string>
 </resources>

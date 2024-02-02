@@ -12,35 +12,46 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.FrameLayout
+import android.widget.ImageView
+import androidx.core.view.children
 import xyz.mufanc.imagedumper.ModuleMain.Companion.TAG
 
 @SuppressLint("ViewConstructor")
 class FloatyWindow(activity: Activity) : FrameLayout(activity), View.OnClickListener, View.OnTouchListener {
 
-    private val mWindowManager = activity.getSystemService(WindowManager::class.java)
+    private val windowManager = activity.getSystemService(WindowManager::class.java)
 
-    private val mContext = ModuleContext(activity)
+    private val context = MixedContext(activity)
 
-    private val mWindowParams = defaultLayoutParams(activity)
+    private val windowParams = defaultLayoutParams(activity)
 
-    private val mController = MoveController(this)
+    private val controller = MoveController(this)
+
+    private val activityWindow = activity.window
 
     override fun onTouch(view: View, ev: MotionEvent): Boolean {
-        mController.feed(ev)
+        controller.feed(ev)
         return false
     }
 
     override fun onClick(view: View?) {
-        Log.i(TAG, "Todo: dump images")
+        val images = ViewVisitor(activityWindow.decorView as ViewGroup)
+            .findImageView()
+            .mapNotNull { Utils.dumpBitmap(it) }
+            .toList()
+
+        ImageSelectorDialog(context, images).show()
     }
 
     init {
-        LayoutInflater.from(mContext).inflate(R.layout.floaty_window, this)
+        LayoutInflater.from(context).inflate(R.layout.floaty_window, this)
 
         setOnClickListener(this)
         setOnTouchListener(this)
 
-        mWindowManager.addView(this, mWindowParams)
+        windowManager.addView(this, windowParams)
+
+        Log.i(TAG, "floaty window created.")
     }
 
     companion object {
@@ -62,7 +73,31 @@ class FloatyWindow(activity: Activity) : FrameLayout(activity), View.OnClickList
         }
     }
 
-    class MoveController(
+    private class ViewVisitor(
+        private val root: ViewGroup
+    ) {
+        companion object {
+            private val nodump: String by lazy {
+                MixedContext.modulePackageContext.getString(R.string.tag_nodump)
+            }
+        }
+
+        fun findImageView(): Sequence<ImageView> {
+            var images: Sequence<ImageView> = emptySequence()
+
+            root.children.forEach { view ->
+                if (view is ImageView && view.tag != nodump) {
+                    images += sequenceOf(view)
+                } else if (view is ViewGroup) {
+                    images += ViewVisitor(view).findImageView()
+                }
+            }
+
+            return images
+        }
+    }
+
+    private class MoveController(
         private val floaty: FloatyWindow
     ) {
 
@@ -74,13 +109,13 @@ class FloatyWindow(activity: Activity) : FrameLayout(activity), View.OnClickList
                 val dx = ev.rawX - x
                 val dy = ev.rawY - y
 
-                floaty.mWindowParams.apply {
+                floaty.windowParams.apply {
                     // Gravity.END or Gravity.BOTTOM
                     x -= dx.toInt()
                     y -= dy.toInt()
                 }
 
-                floaty.mWindowManager.updateViewLayout(floaty, floaty.mWindowParams)
+                floaty.windowManager.updateViewLayout(floaty, floaty.windowParams)
             }
 
             x = ev.rawX

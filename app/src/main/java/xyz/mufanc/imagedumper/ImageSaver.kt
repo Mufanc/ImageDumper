@@ -2,13 +2,14 @@ package xyz.mufanc.imagedumper
 
 import android.content.ContentProvider
 import android.content.ContentValues
-import android.content.Context
 import android.database.Cursor
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
 import android.os.MemoryFile
+import android.os.Parcel
 import android.os.ParcelFileDescriptor
+import android.os.Parcelable
 import android.util.Log
 import com.anggrayudi.storage.media.FileDescription
 import com.anggrayudi.storage.media.MediaStoreCompat
@@ -24,33 +25,51 @@ class ImageSaver : ContentProvider() {
         return true
     }
 
-    @Suppress("Deprecation")
-    private fun doSaveImage(extras: Bundle?): String? {
-        val desc = extras?.getString(KEY_DESCRIPTION) ?: return null
+    @Suppress("Deprecation", "Unchecked_Cast")
+    private fun doSaveImage(extras: Bundle?): Boolean {
+        if (extras == null) return false
 
-        val pfd: ParcelFileDescriptor = extras.getParcelable(KEY_IMAGE_FD) ?: return null
-        val data = FileInputStream(pfd.fileDescriptor).readBytes()
+        extras.classLoader = javaClass.classLoader
 
-        pfd.close()
+        val images = extras.getParcelableArray(KEY_IMAGE_DATA) ?: return false
 
-        val filename = UUID.randomUUID().toString() + (if (desc.isNotEmpty()) "_$desc" else "") + ".png"
+        var success = true
 
-        val file = MediaStoreCompat.createImage(context!!, FileDescription(filename, "ImageDumper"))
+        images.forEach { image ->
+            image as ImageData
 
-        file?.openOutputStream()?.write(data) ?: return null
+            Log.i(TAG, "data: ${image.data}, len: ${image.data.size}")
 
-        return file.basePath
+            val desc = image.description
+            val filename = UUID.randomUUID().toString() + (if (desc.isNotEmpty()) "_$desc" else "") + ".png"
+
+            val file = MediaStoreCompat.createImage(context!!, FileDescription(filename, "ImageDumper"))
+            if (file?.openOutputStream()?.write(image.data) == null) {
+                success = false
+            }
+
+            if (file != null) {
+                Log.i(TAG, "image saved to: ${file.basePath}")
+            }
+        }
+
+        return success
     }
 
     override fun call(method: String, args: String?, extras: Bundle?): Bundle {
-        val imagePath = if (method == METHOD_SAVE_BITMAP) {
-            doSaveImage(extras)
+        val success = if (method == METHOD_SAVE_IMAGES) {
+            try {
+                doSaveImage(extras)
+            } catch (err: Throwable) {
+                Log.e(TAG, "", err)
+                false
+            }
         } else {
             Log.i(TAG, "unexpected method: $method")
-            null
+            false
         }
 
-        return Bundle().apply { putString(KEY_RESULT, imagePath) }
+        return Bundle().apply { putBoolean(KEY_SUCCESS, success) }
     }
 
     override fun query(p0: Uri, p1: Array<String?>?, p2: String?, p3: Array<String?>?, p4: String?): Cursor? = null
@@ -61,42 +80,94 @@ class ImageSaver : ContentProvider() {
 
     companion object {
 
-        private const val METHOD_SAVE_BITMAP = "save_bitmap"
+        private const val METHOD_SAVE_IMAGES = "save_images"
 
-        private const val KEY_IMAGE_FD = "bitmap"
+        private const val KEY_IMAGE_DATA = "image_data"
 
-        private const val KEY_DESCRIPTION = "description"
+        private const val KEY_SUCCESS = "success"
 
-        private const val KEY_RESULT = "result"
+        private val targetUri = Uri.parse("content://${BuildConfig.APPLICATION_ID}.imagesaver")
 
-        fun save(context: Context, bitmap: Bitmap, filename: String? = ""): String? {
-            val resolver = context.applicationContext.contentResolver
+        private val resolver by lazy { MixedContext.hostAppContext.contentResolver }
 
-            val data = Utils.encodeImage(bitmap)
-            val file = MemoryFile("bitmap", data.size)
+        private fun isSuccess(result: Bundle?): Boolean {
+            return result?.getBoolean(KEY_SUCCESS) ?: false
+        }
 
-            file.writeBytes(data, 0, 0, data.size)
+        private fun saveImages(dataArr: List<ImageData>): Bundle? {
+            return resolver.call(
+                targetUri,
+                METHOD_SAVE_IMAGES,
+                "",
+                Bundle().apply { putParcelableArray(KEY_IMAGE_DATA, dataArr.toTypedArray()) }
+            )
+        }
 
-            val fd: FileDescriptor = Reflect.on(file).call("getFileDescriptor").get()
-            val pfd = ParcelFileDescriptor.dup(fd)
+        fun save(bitmap: Bitmap, desc: String? = ""): Boolean {
+            ImageData(bitmap, desc).use { data ->
+                return isSuccess(saveImages(listOf(data)))
+            }
+        }
 
-            val extras = Bundle().apply {
-                putParcelable(KEY_IMAGE_FD, pfd)
-                putString(KEY_DESCRIPTION, filename ?: "")
+        fun save(images: List<Bitmap>): Boolean {
+            val imageDataList = images.map { ImageData(it) }
+            val success = isSuccess(saveImages(imageDataList))
+
+            imageDataList.map(ImageData::close)
+
+            return success
+        }
+    }
+
+    class ImageData private constructor(
+        val data: ByteArray,
+        val description: String
+    ) : Parcelable, AutoCloseable {
+
+        private var mfile: MemoryFile? = null
+        private var fd: FileDescriptor? = null
+        private var pfd: ParcelFileDescriptor? = null
+
+        constructor(bitmap: Bitmap, description: String? = null) : this(
+            Utils.encodeImage(bitmap),
+            description ?: ""
+        ) {
+            mfile = MemoryFile("bitmap@${bitmap.hashCode().toString(16)}", data.size)
+            fd = Reflect.on(mfile).call("getFileDescriptor").get()
+            pfd = ParcelFileDescriptor.dup(fd)
+
+            mfile!!.writeBytes(data, 0, 0, data.size)
+        }
+
+        @Suppress("Deprecation")
+        constructor(parcel: Parcel) : this(
+            parcel.readParcelable<ParcelFileDescriptor>(ParcelFileDescriptor::class.java.classLoader)
+                .use { FileInputStream(it!!.fileDescriptor).readBytes() },
+            parcel.readString()!!
+        )
+
+        override fun writeToParcel(parcel: Parcel, flags: Int) {
+            parcel.writeParcelable(pfd, flags)
+            parcel.writeString(description)
+        }
+
+        override fun describeContents(): Int {
+            return Parcelable.CONTENTS_FILE_DESCRIPTOR
+        }
+
+        override fun close() {
+            pfd?.close()
+            mfile?.close()
+        }
+
+        companion object CREATOR : Parcelable.Creator<ImageData> {
+            override fun createFromParcel(parcel: Parcel): ImageData {
+                return ImageData(parcel)
             }
 
-            val result = resolver.call(
-                Uri.parse("content://${BuildConfig.APPLICATION_ID}.imagesaver"),
-                METHOD_SAVE_BITMAP, "", extras
-            )
-            val savedPath = result?.getString(KEY_RESULT)
-
-            Log.i(TAG, "image saved: $savedPath")
-
-            pfd.close()
-            file.close()
-
-            return savedPath
+            override fun newArray(size: Int): Array<ImageData?> {
+                return arrayOfNulls(size)
+            }
         }
     }
 }
